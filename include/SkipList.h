@@ -9,8 +9,6 @@
 #include <fstream>
 #include <memory>
 
-std::mutex mtx;
-
 // SkipList Node Template.
 template <typename K, typename V>
 class SkipNode {
@@ -45,9 +43,10 @@ private:
     // Pointer to head node
     std::unique_ptr<SkipNode<K, V>> _header;
     // File reader and writer
-    std::istream _file_reader;
-    std::ostream _file_writer;
-    
+    std::ifstream _file_reader;
+    std::ofstream _file_writer;
+    // mutex
+    mutable std::mutex mtx;
 
     /**
      * @brief Get the key value from string object.
@@ -72,7 +71,7 @@ public:
      * This function also initializes counters and file stream objects if needed.
      * @param max_size
      */
-    SkipList(int max_size);
+    SkipList(int max_size): _max_level(max_size), _cur_level(0), _element_cnt(0), _header(std::make_unique<SkipNode<K, V>(K{}, V{}, max_size)>) {};
 
     ~SkipList();
 
