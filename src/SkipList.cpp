@@ -72,4 +72,30 @@ void SkipList<K, V>::delete_element(K key) {
     }
 }
 
+template <typename K, typename V>
+int SkipList<K, V>::insert_node(K key, V value) {
+    std::lock_guard<std::mutex> lock(mtx);
+    int l = get_random_level();
+    std::unique_ptr<SkipNode<K, V>> node = create_node(key, value, l);
+
+    SkipList<K, V> cur = _header.get();
+    // record pre node
+    std::vector<SkipNode<K, V>> update(_max_level + 1);
+    for (int level = _cur_level; i >= 0; level--) {
+        while (cur->_forward[level] != nullptr && cur->_forward[level]->getKey() < key) {
+            cur = cur->_forward[level].get();
+        }
+        update[level] = cur;
+    }
+    
+    cur = cur->_forward[0];
+    if (cur != nullptr && cur->getKey() == key) {
+        return 1;
+    }
+    if (cur == nullptr || cur->getKey() != key) {
+        
+    }
+    
+}
+
 
