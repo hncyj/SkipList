@@ -38,24 +38,24 @@ class SkipList {
 private:
     int _max_level; // Maximum level of the skip list
     int _cur_level; // Current highest level of the skip list
-    int _node_cnt; // SkipList current SkipNode count
+    int _node_cnt; // SkipList current SkipNode numbers
     std::shared_ptr<SkipNode<K, V>> _header; // Pointer to head node
-    mutable std::mutex mtx; // mutex, can be modified in const function
-    std::ifstream _file_reader;
-    std::ofstream _file_writer;
+    mutable static std::mutex mtx; // mutex, can be modified in const function
+    mutable std::ifstream _file_reader;
+    mutable std::ofstream _file_writer;
 
     void get_key_value_from_string(const std::string& str, std::string* key, std::string* value);
-    void is_valid_string(const std::string& str);
+    bool is_valid_string(const std::string& str);
 
 public:
     SkipList(int max_level);
     ~SkipList();
     int get_random_level();
-    std::shared_ptr<SkipNode<K, V>> create_node(K key, V val);
+    std::shared_ptr<SkipNode<K, V>> create_node(K key, V val, int lvl);
     bool search_node(K key) const;
     void delete_node(K key);
-    int insert_node(K key, V val);
-    int size() const;
+    void insert_node(K key, V val);
+    int get_list_size() const;
     void display_list() const;
     void dump_file();
     void load_file();
