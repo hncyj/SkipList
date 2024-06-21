@@ -155,9 +155,8 @@ void SkipList<K, V>::insert_node(K key, V val) {
         std::cerr << "Key: " << key << " already exists!" << std::endl;
         return ;
     }
-
-    if (!cur && cur->getKey() != key) {
-        int generate_level = get_random_level();
+    // generate node
+    int generate_level = get_random_level();
         if (generate_level > _cur_level) {
             for (int level = _cur_level + 1; level <= generate_level; level++) {
                 update[level] = _header;
@@ -165,14 +164,13 @@ void SkipList<K, V>::insert_node(K key, V val) {
             _cur_level = generate_level;
         }
         std::shared_ptr<SkipNode<K, V>> node = create_node(key, val, generate_level);
-
+        // insert node
         for (int level = 0; level <= _cur_level; level++) {
             node->_forward[level] = update[level]->_forward[level];
             update[level]->_forward[level] = node;
         }
         std::cout << "Insert success." << std::endl;
         _node_cnt++;
-    }
 }
 
 template <typename K, typename V>
@@ -213,22 +211,24 @@ template <typename K, typename V>
 void SkipList<K, V>::load_file() {
     _file_reader.open(STORE_FILE_PATH);
     std::cout << "\n*******load file *******\n";
-    std::string line;
-    std::string* key = new std::string();
-    std::string* val = new std::string();
+    std::string key, val, line;
     while (getline(_file_reader, line)) {
-        get_key_value_from_string(line, key, val);
-        if (key->empty() || val->empty()) {
+        get_key_value_from_string(line, &key, &val);
+        if (!key.empty() && !val.empty()) {
             continue;
         }
-        insert_node(std::stoi(*key), *val);
+        insert_node(std::stoi(key), val);
     }
-    delete key;
-    delete val;
     _file_reader.close();
 }
 
 template <typename K, typename V>
-void SkipList<K, V>::clear(std::shared_ptr<SkipNode<K, V>> node) {
-
+void SkipList<K, V>::clear(std::shared_ptr<SkipNode<K, V>> header) {
+    if (!header) {
+        return ;
+    }
+    for (int level = 0; level <= header->getLevel(); level++) {
+        clear(header->_forward[level]);
+    }
+    header.reset();
 }
