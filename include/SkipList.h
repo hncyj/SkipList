@@ -9,6 +9,10 @@
 #include <fstream>
 #include <memory>
 
+#define STORE_FILE_PATH "/Users/yinjiechen/GitHub/SkipList/test/"
+
+std::string delimiter = ":";
+
 // SkipList Node Template.
 template <typename K, typename V>
 class SkipNode {
@@ -44,8 +48,8 @@ private:
     mutable std::ifstream _file_reader;
     mutable std::ofstream _file_writer;
 
-    void get_key_value_from_string(const std::string& str, std::string* key, std::string* value);
     bool is_valid_string(const std::string& str);
+    void get_key_value_from_string(const std::string& str, std::string* key, std::string* value);
 
 public:
     SkipList(int max_level);
@@ -59,7 +63,7 @@ public:
     void display_list() const;
     void dump_file();
     void load_file();
-    void clear(std::shared_ptr<SkipNode<K, V>> node);
+    void clear(std::shared_ptr<SkipNode<K, V>> header);
 };
 
 #endif
