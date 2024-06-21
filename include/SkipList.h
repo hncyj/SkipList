@@ -8,6 +8,7 @@
 #include <mutex>
 #include <fstream>
 #include <memory>
+#include <random>
 
 #define STORE_FILE_PATH "/Users/yinjiechen/GitHub/SkipList/test/"
 
@@ -146,8 +147,10 @@ SkipList<K, V>::~SkipList() {
 
 template <typename K, typename V>
 int SkipList<K, V>::get_random_level() {
-    int level = 1;
-    while (rand() % 2 && level < _max_level) {
+    static std::default_random_engine generator;
+    static std::geometric_distribution<int> distribution(0.5);
+    int level = 0;
+    while (level < _max_level && distribution(generator)) {
         level++;
     }
     return level;
@@ -169,7 +172,7 @@ bool SkipList<K, V>::search_node(K key) const {
         }
     }
     cur = cur->_forward[0].get();
-    return cur && cur->getKey() == key;
+    return cur != nullptr && cur->getKey() == key;
 }
 
 template <typename K, typename V>
@@ -177,7 +180,6 @@ void SkipList<K, V>::delete_node(K key) {
     std::lock_guard<std::mutex> lock(mtx);
     auto cur = _header.get();
     std::vector<SkipNode<K, V>*> update(_max_level + 1);
-
     for (int level = _cur_level; level >= 0; level--) {
         while (cur->_forward[level] != nullptr && cur->_forward[level]->getKey() < key) {
             cur = cur->_forward[level].get();
@@ -215,7 +217,7 @@ void SkipList<K, V>::insert_node(K key, V val) {
         update[level] = cur;
     }
     cur = cur->_forward[0].get();
-    if (cur && cur->getKey() == key) {
+    if (cur != nullptr && cur->getKey() == key) {
         std::cerr << "Key: " << key << " already exists!" << std::endl;
         return ;
     }
@@ -258,17 +260,22 @@ void SkipList<K, V>::display_list() const {
 
 template <typename K, typename V>
 void SkipList<K, V>::dump_file() {
-    std::cout << "\n*******dump file*******\n";
-    _file_writer.open(STORE_FILE_PATH);
-    auto cur = _header->_forward[0].get();
-    while (cur != nullptr) {
-        _file_writer << "["<< cur->getKey() << ": " << cur->getValue() << "]\n";
-        std::cout << "["<< cur->getKey() << ": " << cur->getValue() << "]\n";
-        cur = cur->forward[0].get();
+    try {
+        _file_writer.open(STORE_FILE_PATH);
+        if (!_file_writer.is_open()) {
+            thorw std::runtime_error("Unable to open file for writing.\n");
+        }
+        auto cur = _header->_forward[0].get();
+        while (cur != nullptr) {
+            _file_writer << "[" << cur->getKey() << ": " << cur->getValue() << "]\n";
+            cur = cur->_forward[0].get();
+        }
+        _file_writer.flush();
+        _file_writer.close();
+    } catch (std::exception& e) {
+        // handle the exception
+        std::cerr << "Exception occured: " << e.what() << std::endl;
     }
-    _file_writer.flush();
-    _file_writer.close();
-    return ;
 }
 
 template <typename K, typename V>
