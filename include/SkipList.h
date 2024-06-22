@@ -9,8 +9,9 @@
 #include <fstream>
 #include <memory>
 #include <random>
+#include <exception>
 
-#define STORE_FILE_PATH "/Users/yinjiechen/GitHub/SkipList/test/"
+#define STORE_FILE_PATH "/Users/yinjiechen/GitHub/SkipList/store/dumpfile"
 
 std::string delimiter = ":";
 
@@ -21,9 +22,10 @@ private:
     K _key;
     V _value;
     int _level; // maximum level of SkipNode
-    std::vector<std::shared_ptr<SkipNode<K, V>>> _forward; // SkipNode skip vector
     
 public:
+    std::vector<std::shared_ptr<SkipNode<K, V>>> forward; // SkipNode skip vector
+
     SkipNode() = default;
     SkipNode(K key, V val, int lvl);
     ~SkipNode() = default;
@@ -45,7 +47,7 @@ private:
     int _cur_level; // Current highest level of the skip list
     int _node_cnt; // SkipList current SkipNode numbers
     std::shared_ptr<SkipNode<K, V>> _header; // Pointer to head node
-    mutable static std::mutex mtx; // mutex, can be modified in const function
+    mutable std::mutex mtx; // mutex, can be modified in const function
     mutable std::ifstream _file_reader;
     mutable std::ofstream _file_writer;
 
@@ -73,7 +75,7 @@ SkipNode<K, V>::SkipNode(K key, V val, int level) {
     _key = key;
     _value = val;
     _level = level;
-    _forward.resize(level + 1, nullptr);
+    forward.resize(level + 1, nullptr);
 }
 
 template <typename K, typename V>
@@ -165,78 +167,78 @@ template <typename K, typename V>
 bool SkipList<K, V>::search_node(K key) const {
     // search node by key
     std::lock_guard<std::mutex> lock(mtx);
-    auto cur = _header.get();
+    auto cur = _header;
     for (int level = _cur_level; level >= 0; level--) {
-        while (cur->_forward[level] != nullptr && cur->_forward[level]->getKey() < key) {
-            cur = cur->_forward[level].get();
+        while (cur->forward[level] != nullptr && cur->forward[level]->getKey() < key) {
+            cur = cur->forward[level];
         }
     }
-    cur = cur->_forward[0].get();
     return cur != nullptr && cur->getKey() == key;
 }
 
 template <typename K, typename V>
 void SkipList<K, V>::delete_node(K key) {
     std::lock_guard<std::mutex> lock(mtx);
-    auto cur = _header.get();
-    std::vector<SkipNode<K, V>*> update(_max_level + 1);
+    auto cur = _header;
+    std::vector<std::shared_ptr<SkipNode<K, V>>> update(_max_level + 1);
     for (int level = _cur_level; level >= 0; level--) {
-        while (cur->_forward[level] != nullptr && cur->_forward[level]->getKey() < key) {
-            cur = cur->_forward[level].get();
+        while (cur->forward[level] != nullptr && cur->forward[level]->getKey() < key) {
+            cur = cur->forward[level];
         }
         update[level] = cur;
     }
     // delete node
-    cur = cur->_forward[0].get();
+    cur = cur->forward[0];
     if (!cur || cur->getKey() != key) {
         std::cerr << "Key: " << key << " does not exists!" << std::endl;
         return ;
     }
     for (int level = 0; level <= _cur_level; level++) {
-        if (update[level]->_forward[level] != cur) {
+        if (update[level]->forward[level] != cur) {
             break;
         }
-        update[level]->_forward[level] = cur->_forward[level];
+        update[level]->forward[level] = cur->forward[level];
     }
-    while (_cur_level > 0 && _header->_forward[_cur_level] == nullptr) {
+    while (_cur_level > 0 && _header->forward[_cur_level] == nullptr) {
         --_cur_level;
     }
     _node_cnt--;
+    std::cout << "Delete Key: " << key << " success!\n";
 }
 
 template <typename K, typename V>
 void SkipList<K, V>::insert_node(K key, V val) {
     std::lock_guard<std::mutex> lock(mtx);
-    auto cur = _header.get();
-    std::vector<SkipNode<K, V>*> update(_max_level + 1);
+    auto cur = _header;
+    std::vector<std::shared_ptr<SkipNode<K, V>>> update(_max_level + 1);
     // search insert position
     for (int level = _cur_level; level >= 0; level--) {
-        while (cur->_forward[level] != nullptr && cur->_forward[level]->getKey() < key) {
-            cur = cur->_forward[level].get();
+        while (cur->forward[level] != nullptr && cur->forward[level]->getKey() < key) {
+            cur = cur->forward[level];
         }
         update[level] = cur;
     }
-    cur = cur->_forward[0].get();
+    cur = cur->forward[0];
     if (cur != nullptr && cur->getKey() == key) {
         std::cerr << "Key: " << key << " already exists!" << std::endl;
         return ;
     }
     // generate node
     int generate_level = get_random_level();
-        if (generate_level > _cur_level) {
-            for (int level = _cur_level + 1; level <= generate_level; level++) {
-                update[level] = _header;
-            }
-            _cur_level = generate_level;
+    if (generate_level > _cur_level) {
+        for (int level = _cur_level + 1; level <= generate_level; level++) {
+            update[level] = _header;
         }
-        std::shared_ptr<SkipNode<K, V>> node = create_node(key, val, generate_level);
-        // insert node
-        for (int level = 0; level <= _cur_level; level++) {
-            node->_forward[level] = update[level]->_forward[level];
-            update[level]->_forward[level] = node;
-        }
-        std::cout << "Insert success." << std::endl;
-        _node_cnt++;
+        _cur_level = generate_level;
+    }
+    std::shared_ptr<SkipNode<K, V>> node = create_node(key, val, generate_level);
+    // insert node
+    for (int level = 0; level <= _cur_level; level++) {
+        node->forward[level] = update[level]->forward[level];
+        update[level]->forward[level] = node;
+    }
+    _node_cnt++;
+    std::cout << "insert key: " << key << " success!\n";
 }
 
 template <typename K, typename V>
@@ -246,13 +248,13 @@ int SkipList<K, V>::get_list_size() const {
 
 template <typename K, typename V>
 void SkipList<K, V>::display_list() const {
-    std::cout << "\n*******SkipList*******\n";
+    std::cout << "\n******* SkipList Display *******\n";
     for (int level = 0; level <= _cur_level; level++) {
-        auto cur = _header->_forward[level].get();
-        std::cout << "level: " << level << std::endl;
+        auto cur = _header->forward[level].get();
+        std::cout << "level: " << level << ": ";
         while (cur != nullptr) {
             std::cout << "[" << cur->getKey() << ", " << cur->getValue() << "] -> "; 
-            cur = cur->_forward[level].get();
+            cur = cur->forward[level].get();
         }
         std::cout << std::endl;
     }
@@ -263,12 +265,12 @@ void SkipList<K, V>::dump_file() {
     try {
         _file_writer.open(STORE_FILE_PATH);
         if (!_file_writer.is_open()) {
-            thorw std::runtime_error("Unable to open file for writing.\n");
+            throw std::runtime_error("Unable to open file for writing.\n");
         }
-        auto cur = _header->_forward[0].get();
+        auto cur = _header->forward[0].get();
         while (cur != nullptr) {
             _file_writer << "[" << cur->getKey() << ": " << cur->getValue() << "]\n";
-            cur = cur->_forward[0].get();
+            cur = cur->forward[0].get();
         }
         _file_writer.flush();
         _file_writer.close();
@@ -299,9 +301,10 @@ void SkipList<K, V>::clear(std::shared_ptr<SkipNode<K, V>> header) {
         return ;
     }
     for (int level = 0; level <= header->getLevel(); level++) {
-        clear(header->_forward[level]);
+        clear(header->forward[level]);
     }
     header.reset();
+    std::cout << "SkipList clear success!\n";
 }
 
 #endif
