@@ -1,6 +1,7 @@
 #ifndef _SKIPLIST_H_
 #define _SKIPLIST_H_
 
+#pragma once
 #include <iostream>
 #include <vector>
 #include <string>

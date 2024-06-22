@@ -14,3 +14,6 @@ add_executable(SkipList ${SRC_FILES})
 target_include_directories(SkipList PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 
+# Optionally, create a separate executable for the tests
+add_executable(StressTest test/stress_test.cpp)
+target_include_directories(StressTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

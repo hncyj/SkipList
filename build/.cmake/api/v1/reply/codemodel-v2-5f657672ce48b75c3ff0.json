@@ -15,7 +15,8 @@
 					"source" : ".",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1
 					]
 				}
 			],
@@ -30,7 +31,8 @@
 					"name" : "SkipList",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1
 					]
 				}
 			],
@@ -41,6 +43,13 @@
 					"id" : "SkipList::@6890427a1f51a3e7e1df",
 					"jsonFile" : "target-SkipList-Debug-5e43d1a3c75c3e62761c.json",
 					"name" : "SkipList",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "StressTest::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-StressTest-Debug-f11a41ed9e7089975446.json",
+					"name" : "StressTest",
 					"projectIndex" : 0
 				}
 			]
