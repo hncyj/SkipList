@@ -275,7 +275,6 @@ void SkipList<K, V>::dump_file() {
         _file_writer.flush();
         _file_writer.close();
     } catch (std::exception& e) {
-        // handle the exception
         std::cerr << "Exception occured: " << e.what() << std::endl;
     }
 }
