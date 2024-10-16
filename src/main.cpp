@@ -1,22 +1,29 @@
+/**
+ * @file main.cpp
+ * @author chenyinjie
+ * @version 0.1
+ * @date 2024-10-16
+ */
+
 #include "SkipList.h"
 
 int main() {
     SkipList<int, std::string> skiplist(6);
-    skiplist.insert_node(0, "chen");
-    skiplist.insert_node(1, "yin");
-    skiplist.insert_node(2, "jie");
+    skiplist.InsertNode(0, "chen");
+    skiplist.InsertNode(1, "yin");
+    skiplist.InsertNode(2, "jie");
 
-    std::cout << "SkipList size:" << skiplist.get_list_size() << std::endl;
-    skiplist.display_list();
+    std::cout << "SkipList size:" << skiplist.GetListSize() << std::endl;
+    skiplist.DisplayList();
 
-    skiplist.dump_file();
+    skiplist.DumpFile();
 
-    skiplist.search_node(0);
-    skiplist.search_node(9);
+    skiplist.SearchNode(0);
+    skiplist.SearchNode(9);
 
-    skiplist.delete_node(0);
-    skiplist.delete_node(6);
-    skiplist.display_list();
+    skiplist.DeleteNode(0);
+    skiplist.DeleteNode(6);
+    skiplist.DisplayList();
    
     return 0;
 }
